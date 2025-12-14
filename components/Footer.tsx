@@ -120,7 +120,7 @@ export default function Footer() {
 
         {/* Divider */}
         <div className="mt-10 border-t border-white/5 pt-6 text-center text-xs text-gray-500">
-          © {new Date().getFullYear()} PromptGallery. All rights reserved.
+          © {new Date().getFullYear()} Phexara. All rights reserved.
         </div>
 
         {/* Created By Line */}

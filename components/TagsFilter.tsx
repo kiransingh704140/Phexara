@@ -1,8 +1,7 @@
-// components/TagsFilter.tsx
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 type TagsFilterProps = {
   uniqueTags: string[];
@@ -12,8 +11,8 @@ type TagsFilterProps = {
 export default function TagsFilter({ uniqueTags, selectedTag }: TagsFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Utility to create/update URL with new query parameters
   const createQueryString = useCallback(
     (name: string, value: string) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -28,49 +27,57 @@ export default function TagsFilter({ uniqueTags, selectedTag }: TagsFilterProps)
   );
 
   const handleTagClick = (tag: string) => {
-    // If the clicked tag is already selected, clear the filter (set tag to '')
     const newTag = tag === selectedTag ? '' : tag;
-    
-    // Navigate to the new URL with the updated 'tag' query parameter
     router.push(`/gallery?${createQueryString('tag', newTag)}`, { scroll: false });
   };
 
-  const tagBaseClass = "px-4 py-2 text-sm rounded-full font-medium transition-colors duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1";
-  const activeClass = "bg-indigo-600 text-white shadow-lg shadow-indigo-600/50 hover:bg-indigo-500";
-  const inactiveClass = "bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-white/10";
-  const clearFilterClass = "px-4 py-2 text-sm rounded-full font-medium transition-colors duration-200 cursor-pointer whitespace-nowrap bg-pink-500/10 text-pink-300 hover:bg-pink-500/20 border border-pink-500/20 flex items-center gap-1";
+  // Styles
+  const tagBaseClass = "px-5 py-2 text-sm rounded-full font-medium transition-all duration-200 cursor-pointer whitespace-nowrap border select-none";
+  // Active: Glowy & distinct
+  const activeClass = "bg-pink-600 text-white border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.4)] transform scale-105";
+  // Inactive: Muted, blends in
+  const inactiveClass = "bg-gray-900/50 text-gray-400 border-white/10 hover:border-white/30 hover:text-white hover:bg-gray-800";
 
-
-  if (uniqueTags.length === 0 && !selectedTag) {
-    return <p className="text-gray-500 text-center">No tags available to filter.</p>;
-  }
+  if (uniqueTags.length === 0 && !selectedTag) return null;
 
   return (
-    <div className="bg-white/5 border border-white/10 p-4 rounded-xl shadow-inner backdrop-blur-sm mx-0 sm:mx-0">
-      <h3 className="text-lg font-semibold text-gray-300 mb-3">Filter by Tag</h3>
-      <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-2">
-        
-        {/* Clear Filter Button */}
-        {selectedTag && (
-             <button
-               onClick={() => handleTagClick(selectedTag)} // Clicking the active tag clears the filter
-               className={clearFilterClass}
-             >
-               Clear Filter <span className="text-pink-400">❌</span>
-             </button>
-        )}
+    <div className="relative w-full max-w-[1400px] mx-auto group">
+      
+      {/* Left Fade Gradient (Visual cue) */}
+      <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-gray-950 to-transparent z-10 pointer-events-none" />
 
-        {/* Tag Buttons */}
+      {/* Scrollable Container */}
+      <div 
+        ref={scrollContainerRef}
+        className="flex items-center gap-3 overflow-x-auto pb-4 pt-2 px-4 scrollbar-hide scroll-smooth"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} // Hide scrollbar Firefox/IE
+      >
+        {/* 'All' / Clear Filter Option (Always first) */}
+        <button
+          onClick={() => handleTagClick(selectedTag || '')}
+          className={`${tagBaseClass} ${!selectedTag ? activeClass : inactiveClass}`}
+        >
+          ✨ All
+        </button>
+
+        {/* Dynamic Tags */}
         {uniqueTags.map((tag) => (
           <button
             key={tag}
             onClick={() => handleTagClick(tag)}
             className={`${tagBaseClass} ${tag === selectedTag ? activeClass : inactiveClass}`}
           >
-          {tag}
+            {tag}
           </button>
         ))}
       </div>
+
+      {/* Right Fade Gradient */}
+      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-gray-950 to-transparent z-10 pointer-events-none" />
+      
+      {/* Optional: Add custom CSS to hide scrollbar for Webkit somewhere in your global CSS
+          .scrollbar-hide::-webkit-scrollbar { display: none; } 
+      */}
     </div>
   );
 }

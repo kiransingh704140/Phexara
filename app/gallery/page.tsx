@@ -11,7 +11,6 @@ type ImageRow = {
   id: string;
   public_id: string;
   url: string;
-  thumb_url: string | null;
   prompt: string;
   created_at: string;
   tags: string[] | null;
@@ -21,7 +20,7 @@ type ImageRow = {
 const ErrorState = () => (
   <main className="min-h-screen p-6 flex items-center justify-center bg-gray-950 text-white">
     <div className="max-w-md mx-auto text-center p-8 rounded-2xl bg-red-950/30 border border-red-900/50">
-      <h1 className="text-3xl font-bold mb-4 text-red-400">PromptGallery</h1>
+      <h1 className="text-3xl font-bold mb-4 text-red-400">Phexara</h1>
       <p className="text-red-200">
         🚨 Failed to load images from database. Please check connectivity or logs.
       </p>
@@ -106,7 +105,7 @@ const GalleryCard = ({ img }: { img: ImageRow }) => (
     <Link href={`/gallery/${img.id}`} className="block h-full">
       <div className="relative w-full aspect-square bg-gray-950 overflow-hidden">
         <Image
-          src={img.thumb_url ?? img.url}
+          src={img.url}
           alt={img.prompt ?? 'AI image'}
           fill
           style={{ objectFit: 'cover' }}
@@ -166,7 +165,7 @@ export default async function GalleryPage(props: { searchParams: Promise<{ tag?:
   // Single query returns requested rows + exact count for pagination UI
   let query = supabase
     .from('images')
-    .select('id, public_id, url, thumb_url, prompt, created_at, tags', { count: 'exact' })
+    .select('id, public_id, url, prompt, created_at, tags', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(start, end);
 
