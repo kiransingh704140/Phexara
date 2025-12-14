@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Phexara",
-  description: "A simple AI image gallery with prompts — built with Next.js, Supabase, and Cloudinary.",
+   title: {
+    default: 'Phexara – AI Image Prompt Gallery',
+    template: '%s | Phexara',
+  },
+  description:
+    'Discover high-quality AI-generated images with detailed prompts. Copy AI prompts for Google Gemini, Midjourney, Stable Diffusion, DALL·E and more.',
   icons: {
     icon: '/logo.png',
   },
