@@ -58,25 +58,6 @@ const NotFoundState = ({ message }: { message: string }) => (
   </main>
 );
 
-const BackButton = () => (
-  <Link
-    href="/gallery"
-    className="inline-flex items-center text-sm text-gray-400 hover:text-white transition-colors mb-6 group"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-    </svg>
-    Back to gallery
-  </Link>
-);
-
 // --- Main Page Component ---
 
 export default async function ImageDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -99,9 +80,7 @@ export default async function ImageDetailPage({ params }: { params: Promise<{ id
       <DetailHeader /> {/* ADDED STICKY HEADER */}
       <main className="min-h-screen p-6 sm:p-12 bg-gray-950 text-white bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-gray-950">
         <div className="max-w-[1400px] mx-auto">
-
-          <BackButton />
-
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
 
             {/* --- Left Column: The Image --- */}

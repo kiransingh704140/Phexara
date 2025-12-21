@@ -151,78 +151,112 @@ const GalleryCard = ({ img }: { img: ImageRow }) => (
 // Revalidate ISR
 export const revalidate = 60; // ISR: revalidate every 60s
 
-export default async function GalleryPage(props: { searchParams: Promise<{ tag?: string; page?: string; pageSize?: string }> }) {
+export default async function GalleryPage(props: {
+  searchParams: Promise<{ tag?: string; page?: string; pageSize?: string }>;
+}) {
   const searchParams = await props.searchParams;
   const selectedTag = searchParams.tag;
 
-  // Pagination defaults
-  const page = Math.max(Number(searchParams.page ?? '1'), 1);
-  const pageSize = Math.min(Math.max(Number(searchParams.pageSize ?? '60'), 12), 120); // clamp between 12 and 120
+  /* -----------------------------
+   * Pagination (safe + clamped)
+   * ----------------------------- */
+  const pageSize = Math.min(
+    Math.max(Number(searchParams.pageSize ?? '60'), 12),
+    120
+  );
+
+  const rawPage = Math.max(Number(searchParams.page ?? '1'), 1);
+
+  /* -----------------------------
+   * Build base query (NO range)
+   * ----------------------------- */
+  let baseQuery = supabase
+    .from('images')
+    .select('id, public_id, url, prompt, created_at, tags', {
+      count: 'exact',
+    })
+    .order('created_at', { ascending: false });
+
+  if (selectedTag) {
+    baseQuery = baseQuery.contains('tags', [selectedTag]);
+  }
+
+  /* -----------------------------
+   * Fetch count ONLY (safe)
+   * ----------------------------- */
+  const countRes = await baseQuery;
+  const totalCount = countRes.count ?? 0;
+
+  if (countRes.error) {
+    console.error('Supabase fetch error (gallery count):', countRes.error);
+    return <ErrorState />;
+  }
+
+  /* -----------------------------
+   * Clamp page to valid range
+   * ----------------------------- */
+  const maxPage = Math.max(1, Math.ceil(totalCount / pageSize));
+  const page = Math.min(rawPage, maxPage);
+
   const start = (page - 1) * pageSize;
   const end = start + pageSize - 1;
 
-  // Build the base query:
-  // Single query returns requested rows + exact count for pagination UI
-  let query = supabase
+  /* -----------------------------
+   * Fetch paginated data
+   * ----------------------------- */
+  let dataQuery = supabase
     .from('images')
-    .select('id, public_id, url, prompt, created_at, tags', { count: 'exact' })
+    .select('id, public_id, url, prompt, created_at, tags')
     .order('created_at', { ascending: false })
     .range(start, end);
 
   if (selectedTag) {
-    // Use array contains operator for tag filtering
-    query = query.contains('tags', [selectedTag]);
+    dataQuery = dataQuery.contains('tags', [selectedTag]);
   }
 
-  const res = await query;
-  const images = (res.data as ImageRow[]) ?? [];
-  const error = res.error;
-  const totalCount = res.count ?? 0;
+  const dataRes = await dataQuery;
+  const images = (dataRes.data as ImageRow[]) ?? [];
 
-  if (error) {
-    console.error('Supabase fetch error (gallery):', error);
+  if (dataRes.error) {
+    console.error('Supabase fetch error (gallery data):', dataRes.error);
     return <ErrorState />;
   }
 
-  // Compute uniqueTags from the images we fetched (single pass)
+  /* -----------------------------
+   * Derived UI state
+   * ----------------------------- */
   const uniqueTags = Array.from(
-    new Set(
-      images
-        .flatMap((row) => row.tags ?? [])
-        .filter(Boolean)
-    )
+    new Set(images.flatMap((row) => row.tags ?? []))
   ).sort();
 
   const hasImages = images.length > 0;
   const displayCount = images.length;
 
+  /* -----------------------------
+   * Render
+   * ----------------------------- */
   return (
     <>
       <TouchHearts />
-      {/* Sticky Header is outside main for better fixed behavior */}
-      <GalleryHeader count={totalCount} selectedTag={selectedTag} /> 
 
-      {/* Main content area */}
+      {/* Sticky Header */}
+      <GalleryHeader count={totalCount} selectedTag={selectedTag} />
+
       <main className="min-h-screen p-4 sm:p-12 bg-gray-950 text-white bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-gray-950 to-gray-950 pt-0">
         <div className="max-w-[1400px] mx-auto">
-          {/* Spacer adjusted to ensure content starts below the description card (approx 90px total height) */}
-          <div className="h-[8px] block" aria-hidden="true" />
-          
-          {/* Tags filter is placed after the description card and spacer */}
+          <div className="h-[8px]" aria-hidden="true" />
+
           <section className="mb-1">
             <TagsFilter uniqueTags={uniqueTags} selectedTag={selectedTag} />
           </section>
 
-          {/* --- Divider --- */}
           <ExploreDivider />
 
           <section>
             {!hasImages ? (
               selectedTag ? (
-                // State: Filter selected but no images found
                 <NoResultsState tag={selectedTag} />
               ) : (
-                // State: Database is completely empty
                 <EmptyState />
               )
             ) : (
@@ -234,15 +268,27 @@ export default async function GalleryPage(props: { searchParams: Promise<{ tag?:
                   ))}
                 </div>
 
-                {/* --- Simple Load More (server-side) --- */}
+                {/* Pagination */}
                 <div className="mt-16 text-center w-full">
                   <div className="mx-auto max-w-md">
                     <div className="h-px w-24 bg-gradient-to-r from-transparent via-gray-700 to-transparent mb-4 mx-auto" />
 
                     <p className="text-sm text-gray-300 mb-2">
-                      Showing <span className="font-semibold text-white">{displayCount}</span> of{' '}
-                      <span className="font-semibold text-white">{totalCount.toLocaleString()}</span> generations
-                      {selectedTag && <span className="text-pink-400"> (filtered by "{selectedTag}")</span>}
+                      Showing{' '}
+                      <span className="font-semibold text-white">
+                        {displayCount}
+                      </span>{' '}
+                      of{' '}
+                      <span className="font-semibold text-white">
+                        {totalCount.toLocaleString()}
+                      </span>{' '}
+                      generations
+                      {selectedTag && (
+                        <span className="text-pink-400">
+                          {' '}
+                          (filtered by "{selectedTag}")
+                        </span>
+                      )}
                     </p>
 
                     <div className="flex items-center justify-center gap-3 mt-3">
@@ -251,9 +297,11 @@ export default async function GalleryPage(props: { searchParams: Promise<{ tag?:
                           href={`/gallery?${new URLSearchParams(
                             Object.fromEntries(
                               [
-                                selectedTag ? ['tag', selectedTag] : null,
+                                selectedTag
+                                  ? ['tag', selectedTag]
+                                  : null,
                                 ['page', String(page + 1)],
-                                ['pageSize', String(pageSize)], // keep pageSize same (60 by default)
+                                ['pageSize', String(pageSize)],
                               ].filter(Boolean) as string[][]
                             )
                           ).toString()}`}
@@ -262,7 +310,10 @@ export default async function GalleryPage(props: { searchParams: Promise<{ tag?:
                           Next
                         </Link>
                       ) : (
-                        <button className="px-4 py-2 rounded bg-gray-800/40 text-sm cursor-not-allowed" disabled>
+                        <button
+                          className="px-4 py-2 rounded bg-gray-800/40 text-sm cursor-not-allowed"
+                          disabled
+                        >
                           No more
                         </button>
                       )}
@@ -278,6 +329,7 @@ export default async function GalleryPage(props: { searchParams: Promise<{ tag?:
           </section>
         </div>
       </main>
+
       <Footer />
     </>
   );

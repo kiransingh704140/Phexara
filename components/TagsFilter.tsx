@@ -14,13 +14,18 @@ export default function TagsFilter({ uniqueTags, selectedTag }: TagsFilterProps)
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const createQueryString = useCallback(
-    (name: string, value: string) => {
+    (tagValue: string) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set(name, value);
+
+      // ✅ Always reset pagination when changing tag
+      params.delete('page');
+
+      if (tagValue) {
+        params.set('tag', tagValue);
       } else {
-        params.delete(name);
+        params.delete('tag');
       }
+
       return params.toString();
     },
     [searchParams]
@@ -28,8 +33,9 @@ export default function TagsFilter({ uniqueTags, selectedTag }: TagsFilterProps)
 
   const handleTagClick = (tag: string) => {
     const newTag = tag === selectedTag ? '' : tag;
-    router.push(`/gallery?${createQueryString('tag', newTag)}`, { scroll: false });
+    router.push(`/gallery?${createQueryString(newTag)}`, { scroll: false });
   };
+
 
   // Styles
   const tagBaseClass = "px-5 py-2 text-sm rounded-full font-medium transition-all duration-200 cursor-pointer whitespace-nowrap border select-none";
@@ -42,12 +48,12 @@ export default function TagsFilter({ uniqueTags, selectedTag }: TagsFilterProps)
 
   return (
     <div className="relative w-full max-w-[1400px] mx-auto group">
-      
+
       {/* Left Fade Gradient (Visual cue) */}
       <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-gray-950 to-transparent z-10 pointer-events-none" />
 
       {/* Scrollable Container */}
-      <div 
+      <div
         ref={scrollContainerRef}
         className="flex items-center gap-3 overflow-x-auto pb-4 pt-2 px-4 scrollbar-hide scroll-smooth"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} // Hide scrollbar Firefox/IE
@@ -74,10 +80,6 @@ export default function TagsFilter({ uniqueTags, selectedTag }: TagsFilterProps)
 
       {/* Right Fade Gradient */}
       <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-gray-950 to-transparent z-10 pointer-events-none" />
-      
-      {/* Optional: Add custom CSS to hide scrollbar for Webkit somewhere in your global CSS
-          .scrollbar-hide::-webkit-scrollbar { display: none; } 
-      */}
     </div>
   );
 }

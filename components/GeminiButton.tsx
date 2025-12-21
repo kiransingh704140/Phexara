@@ -30,7 +30,7 @@ export default function GeminiButton({ prompt }: GeminiButtonProps) {
           clipRule="evenodd"
         />
       </svg>
-      Open Gemini
+      Go to Gemini
     </Link>
   );
 }
