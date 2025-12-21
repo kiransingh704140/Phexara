@@ -1,20 +1,15 @@
+// components/GeminiButton.tsx
 import Link from 'next/link';
 
+// We keep the prop for structural consistency, 
+// though we aren't using it in the URL anymore.
 type GeminiButtonProps = {
-  prompt: string;
-};
-
-// Hypothetical deep-link structure to open a new chat session with a pre-filled prompt.
-// This example uses a general Google Search/AI query. In a real application,
-// you would use the exact, official deep-link format provided by Gemini/Google.
-const generateGeminiUrl = (prompt: string) => {
-  const encodedPrompt = encodeURIComponent(`Generate an image based on this prompt: "${prompt}"`);
-  // Using a robust, common deep-link pattern
-  return `https://gemini.google.com/app/chat?q=${encodedPrompt}`;
+  prompt?: string; 
 };
 
 export default function GeminiButton({ prompt }: GeminiButtonProps) {
-  const geminiUrl = generateGeminiUrl(prompt);
+  // Direct link to the Gemini interface
+  const geminiUrl = "https://gemini.google.com/app";
 
   return (
     <Link
@@ -35,7 +30,7 @@ export default function GeminiButton({ prompt }: GeminiButtonProps) {
           clipRule="evenodd"
         />
       </svg>
-      Create with Gemini
+      Open Gemini
     </Link>
   );
 }

@@ -143,7 +143,7 @@ export default async function ImageDetailPage({ params }: { params: Promise<{ id
                     <div className="mt-4 flex flex-wrap justify-end gap-3 pt-4 border-t border-white/10 -mx-4 px-4">
                       
                       {/* 1. Primary Action: Create with Gemini (Prominent styling) */}
-                      <GeminiButton prompt={image.prompt} />
+                      <GeminiButton />
                       
                       {/* 2. Secondary Actions */}
                       <PromptCopyButton prompt={image.prompt} />
